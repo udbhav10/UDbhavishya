@@ -144,6 +144,9 @@ def run(series: SeriesData, settings: RunSettings | None = None) -> RunResult:
     driver = series.driver
     driver_name = series.driver_name or "driver"
     avail = availability(train, s_eff, driver is not None)
+    if avail["winters"].available and (sp.test <= 0).any():
+        # The final forecast refits on all data, which must also be above zero.
+        avail["winters"] = Availability(False, "Multiplicative seasonality needs demand above zero")
     fits = _fit_all(train, s_eff, settings, avail, driver, driver_name)
     test_fc = _test_forecasts(fits, sp.test, driver)
     comparison = recommend.compare(sp.test, test_fc, train, s_eff)

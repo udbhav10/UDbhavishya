@@ -51,7 +51,7 @@ def _shampoo() -> pd.DataFrame:
     n = hist + future
     dates = pd.date_range("2022-01-03", periods=n, freq="7D")  # Mondays
     t = np.arange(n)
-    season = 1 + 0.12 * np.sin(2 * np.pi * (t - 10) / 52)
+    season = 1 + 0.25 * np.sin(2 * np.pi * (t - 10) / 52)
     promo = np.zeros(n, dtype=int)
     promo[rng.choice(np.arange(3, n), size=n // 7, replace=False)] = 1
     level = 1800 * (1 + 0.06 * t / 52)

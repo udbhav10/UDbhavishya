@@ -172,3 +172,16 @@ def test_reset_clears_everything_after_confirmation():
     assert at.session_state["step"] == "Data"
     assert at.session_state["source"] == "upload"
     assert at.session_state["demo_key"] == "paint"
+
+
+def test_pick_a_test_file():
+    from ui.steps import TEST_DIR, TEST_FILES
+
+    assert all((TEST_DIR / k).exists() for k in TEST_FILES)
+    at = AppTest.from_file(APP, default_timeout=60)
+    at.run()
+    at.selectbox(key="src_testfile").set_value("synthetic/13_daily_pharmacy_pos_export_messy.csv").run()
+    assert not at.exception, [e.value for e in at.exception]
+    assert at.session_state["upload_origin"] == "test"
+    assert any("Test file loaded" in c.value for c in at.caption)
+    assert any("duplicate period" in e.value for e in at.error)  # the messy file's duplicates are caught

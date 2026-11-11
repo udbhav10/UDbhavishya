@@ -48,7 +48,31 @@ st.html(f"""<style>
   transform: translate(-50%, -50%);
   animation: ud-fade 0.25s ease 0.35s both, ud-spin 0.8s linear infinite;
 }}
+.st-key-themesync {{ display: none; }}
 </style>""")
+
+# Switching light/dark in the ⋮ menu repaints the page but does not rerun the app, so the logo,
+# chart colours and loader would keep the old theme. This watcher notices the page's colour scheme
+# differs from the one the server drew with and clicks a hidden button once to rerun (max 3 tries).
+st.html(f"""<script>
+window.__udServerTheme = "{_theme}";
+window.__udTries = window.__udTries || {{}};
+if (!window.__udWatch) {{
+  window.__udWatch = setInterval(function () {{
+    var app = document.querySelector('.stApp');
+    if (!app) return;
+    var scheme = getComputedStyle(app).colorScheme;
+    if ((scheme !== 'light' && scheme !== 'dark') || scheme === window.__udServerTheme) return;
+    if (window.__udPending || (window.__udTries[scheme] || 0) >= 3) return;
+    var btn = document.querySelector('.st-key-themesync button');
+    if (!btn) return;
+    window.__udPending = true;
+    window.__udTries[scheme] = (window.__udTries[scheme] || 0) + 1;
+    btn.click();
+    setTimeout(function () {{ window.__udPending = false; }}, 2500);
+  }}, 400);
+}}
+</script>""", unsafe_allow_javascript=True)
 
 from engine import frequency as fq  # noqa: E402
 from engine import seasonality, split  # noqa: E402
@@ -90,6 +114,8 @@ def confirm_reset() -> None:
 with st.container(key="topbar"):
     st.button("Reset", icon=":material/restart_alt:", key="reset_all", on_click=_ask_reset,
               help="Start over: clear the data, choices and results.")
+with st.container(key="themesync"):
+    st.button("theme sync", key="theme_sync")  # clicked by the theme watcher; hidden
 if ss.get("confirm_reset"):
     confirm_reset()
 

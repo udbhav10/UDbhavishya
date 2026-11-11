@@ -1,6 +1,8 @@
 """The five step screens. Each draws controls, calls the engine via state, and charts."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -48,12 +50,69 @@ def _on_demo_change():
     forget(("w_",))
 
 
+TEST_DIR = Path(__file__).resolve().parents[1] / "test-data"
+# Ready-made files in test-data/: path -> (dropdown label, one-line context shown after loading)
+TEST_FILES = {
+    "real/01_daily_seattle_bike_crossings_with_weather.csv":
+        ("Seattle bike trips · daily — real, weather drivers", "Bike crossings, Seattle · daily: real counts 2023–24 with temperature and rain as drivers"),
+    "real/02_weekly_seattle_bike_crossings.csv":
+        ("Seattle bike trips · weekly — real, 2 years only", "Bike crossings, Seattle · weekly: real, only two years: too short for Winters"),
+    "real/03_monthly_us_ice_cream_production_index.csv":
+        ("US ice cream output · monthly — real, summer season", "US ice cream production · monthly: real, strong summer season, flat long-run level"),
+    "real/04_monthly_us_clothing_store_sales_usd_mn.csv":
+        ("US clothing sales · monthly — real, COVID crash", "US clothing store sales · monthly: real, December peak and the April-2020 COVID crash"),
+    "real/05_monthly_us_light_vehicle_sales_k_units.csv":
+        ("US vehicle sales · monthly — real, recessions", "US vehicle sales · monthly: real, seasonality plus the 2008 and 2020 downturns"),
+    "real/06_monthly_us_electricity_generation_index.csv":
+        ("US electricity · monthly — real, two yearly peaks", "US electricity generation · monthly: real, two peaks a year: summer and winter"),
+    "real/07_monthly_us_housing_starts_k_units.csv":
+        ("US housing starts · monthly — real, 2006–11 cycle", "US housing starts · monthly: real, seasonal with a deep 2006–2011 cycle"),
+    "real/08_monthly_us_beer_wine_wholesale_usd_mn.csv":
+        ("US beer & wine · monthly — real, steady growth", "US beer and wine wholesale · monthly: real, summer and December peaks, steady growth"),
+    "real/09_quarterly_us_ecommerce_sales_usd_mn.csv":
+        ("US e-commerce · quarterly — real, Q4 peak", "US e-commerce sales · quarterly: real, Q4 holiday peak and fast growth"),
+    "real/10_yearly_us_light_vehicle_sales_k_units.csv":
+        ("US vehicle sales · yearly — real, no season", "US vehicle sales · yearly: real, trend and cycles with no season"),
+    "real/11_monthly_us_retail_two_categories_SKU.csv":
+        ("US retail, 2 SKUs · monthly — real, SKU column", "US retail, 2 categories · monthly: real, two SKUs in one file"),
+    "synthetic/12_weekly_fmcg_four_skus_price_promo.xlsx":
+        ("FMCG 4 SKUs · weekly · Excel — price, promos", "FMCG sell-out, 4 SKUs · weekly (Excel): price and promotion drivers, Diwali build-up, a stock-out"),
+    "synthetic/13_daily_pharmacy_pos_export_messy.csv":
+        ("Pharmacy POS · daily — messy: duplicates, gaps", "Pharmacy POS export · daily: messy: duplicates, closed days, DD/MM dates, semicolons"),
+    "synthetic/14_monthly_spare_part_intermittent.csv":
+        ("Spare part · monthly — intermittent, many zeros", "Spare part issues · monthly: intermittent demand: more than half the months are zero"),
+    "synthetic/15_monthly_electronics_net_units_with_returns.csv":
+        ("Electronics · monthly — negative recall month", "Electronics net units · monthly: festive-sale spikes and a negative recall month"),
+    "synthetic/16_monthly_cement_dispatch_rainfall_future_rows.csv":
+        ("Cement · monthly — rainfall driver, future rows", "Cement dispatches · monthly: rainfall driver with 6 future months to forecast"),
+    "synthetic/17_yearly_two_wheeler_registrations.csv":
+        ("Two-wheelers · yearly — short, year numbers", "Two-wheeler registrations · yearly: short series, years written as plain numbers"),
+}
+
+
+def _uploader_key() -> str:
+    return f"src_upload_{ss.get('upload_nonce', 0)}"
+
+
 def _on_upload():
-    f = ss.get("src_upload")
+    f = ss.get(_uploader_key())
     if f is None:
         ss.upload_name, ss.upload_bytes = None, None
     else:
         ss.upload_name, ss.upload_bytes = f.name, f.getvalue()
+        ss.upload_origin = "local"
+        ss.src_testfile = None
+    forget(("w_",))
+
+
+def _on_test_pick():
+    rel = ss.get("src_testfile")
+    if rel is None:
+        return
+    path = TEST_DIR / rel
+    ss.upload_name, ss.upload_bytes = path.name, path.read_bytes()
+    ss.upload_origin = "test"
+    ss.upload_nonce = ss.get("upload_nonce", 0) + 1  # clears the file box
     forget(("w_",))
 
 
@@ -75,8 +134,18 @@ def data_step(ctx: state.DataContext) -> None:
             p = demo.PRODUCTS[ss.demo_key]
             messages.note(f"Simulated data for demonstration: {p.pattern}; driver: {p.driver}.")
         else:
-            st.file_uploader("Sales file (.csv or .xlsx, up to 50 MB)", type=["csv", "xlsx"], key="src_upload",
+            st.file_uploader("Sales file (.csv or .xlsx, up to 50 MB)", type=["csv", "xlsx"], key=_uploader_key(),
                              on_change=_on_upload, help="One row per period: a date and a demand value.")
+            available = [k for k in TEST_FILES if (TEST_DIR / k).exists()]
+            if available:
+                if "src_testfile" not in ss:
+                    ss.src_testfile = None
+                st.selectbox("…or pick a ready-made test file", available, key="src_testfile",
+                             on_change=_on_test_pick, index=None, placeholder="Choose a test file",
+                             format_func=lambda k: TEST_FILES[k][0],
+                             help="Real and realistic sample files that exercise different app features.")
+                if ss.get("upload_origin") == "test" and ss.src_testfile in TEST_FILES:
+                    messages.note(f"Test file loaded · {TEST_FILES[ss.src_testfile][1]}.")
             with st.popover("File format"):
                 st.markdown(
                     "- **date**: any common format (2024-01, Jan-2024, 01/01/2024)\n"

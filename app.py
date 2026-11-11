@@ -81,7 +81,7 @@ with st.sidebar:
                         f"**Test** · {fq.label(sp.test.index[0])} – {fq.label(sp.test.index[-1])}")
     st.divider()
     st.caption("ℹ Your data stays in this session only. Nothing is saved or shared.")
-    st.caption("Theme: ⋮ menu → Settings → light or dark.")
+    st.caption("Theme: ⋮ menu (top right) → Light or Dark.")
 
 
 # ---------------------------------------------------------------- stepper

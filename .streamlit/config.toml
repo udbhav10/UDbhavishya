@@ -6,7 +6,7 @@ runOnSave = false
 gatherUsageStats = false
 
 [client]
-toolbarMode = "minimal"
+toolbarMode = "viewer"
 
 [theme]
 primaryColor = "#2a78d6"

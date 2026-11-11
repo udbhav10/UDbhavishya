@@ -46,7 +46,7 @@ st.html(f"""<style>
   transform: translate(-50%, -50%);
   animation: ud-fade 0.25s ease 0.35s both, ud-spin 0.8s linear infinite;
 }}
-.st-key-themesync {{ display: none; }}
+.st-key-themesync, .st-key-scrolltop {{ display: none; }}
 </style>""")
 
 # Switching light/dark in the ⋮ menu repaints the page but does not rerun the app, so the logo,
@@ -194,6 +194,19 @@ with reset_col:
         st.button("Reset", icon=":material/restart_alt:", key="reset_all", on_click=_ask_reset,
                   help="Start over: clear the data, choices and results.")
 current = ss.step or state.STEPS[0]
+# Scroll to the top when the step changes. The script embeds the step name, so Streamlit only
+# re-runs it when the step changes (not when a slider on the same step moves).
+with st.container(key="scrolltop"):
+    st.html(f"""<script>/* step: {current} */
+(function () {{
+  function top() {{
+    var main = document.querySelector('[data-testid="stMain"]');
+    if (main) main.scrollTo({{top: 0, behavior: 'instant'}});
+    window.scrollTo(0, 0);
+  }}
+  top(); setTimeout(top, 60); setTimeout(top, 300);
+}})();
+</script>""", unsafe_allow_javascript=True)
 if locked_attempt:
     st.warning(f"Finish the Data step first: {ctx.block_reason}", icon="⚠")
 

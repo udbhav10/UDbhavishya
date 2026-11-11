@@ -1,0 +1,20 @@
+[server]
+maxUploadSize = 50
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+primaryColor = "#2a78d6"
+font = "sans-serif"
+baseRadius = "0.5rem"
+
+[theme.light]
+primaryColor = "#2a78d6"
+
+[theme.dark]
+primaryColor = "#3987e5"

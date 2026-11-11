@@ -58,3 +58,24 @@ def test_demo_validates_cleanly(key):
     assert not diag.gaps and diag.n_duplicate_periods == 0
     series = v.build_series(raw, diag, raw.freq)
     assert series.future_driver is not None and len(series.future_driver) > 0
+
+
+EXPECTED_WINTERS = {"bread": True, "shampoo": True, "paint": True, "ac": True, "two_wheelers": False}
+
+
+@pytest.mark.parametrize("key", KEYS)
+def test_demo_supports_suitable_methods(key):
+    from engine import split
+    from engine.models import availability
+
+    parsed, raw, diag = build(key)
+    series = v.build_series(raw, diag, raw.freq)
+    s = raw.freq.default_season
+    test_len = split.default_test_length(len(series.demand), s, raw.freq.code)
+    sp = split.split(series.demand, test_len)
+    av = availability(sp.train, s, has_driver=series.driver is not None)
+    for method in ("naive", "snaive", "ses", "holt", "regression"):
+        assert av[method].available, (method, av[method].reason)
+    assert av["winters"].available == EXPECTED_WINTERS[key], av["winters"].reason
+    if key == "paint":
+        assert test_len == 12

@@ -28,7 +28,7 @@ st.html(f"""<style>
 [data-testid="stSidebarUserContent"] {{ padding-top: 0; }}
 [data-testid="stSidebarUserContent"] [data-testid="stCaptionContainer"]:first-of-type {{ margin-top: 0.6rem; }}
 
-.st-key-topbar {{ position: fixed; top: 0.6rem; right: 3.75rem; z-index: 999991; width: auto; }}
+.st-key-topbar {{ position: fixed; top: 0.875rem; right: 3.75rem; z-index: 999991; width: auto; }}
 .st-key-topbar button {{ padding: 0.15rem 0.75rem; min-height: 2rem; }}
 
 @keyframes ud-fade {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}

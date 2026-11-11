@@ -23,7 +23,7 @@ STEPS = ["Data", "Split & clean", "Models", "Compare", "Forecast"]
 def init() -> None:
     defaults = {
         "step": STEPS[0],
-        "source": "demo",
+        "source": "upload",
         "demo_key": "paint",
         "mapping": None,
         "mapping_for": None,

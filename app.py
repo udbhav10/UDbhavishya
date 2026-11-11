@@ -8,30 +8,90 @@ from pathlib import Path
 
 import streamlit as st
 
-from engine import frequency as fq
-from engine import seasonality, split
-from engine import validate as v
-from engine.messages import has_errors
-from ui import messages, state, steps
-from ui.widgets import bind_state
-
 ASSETS = Path(__file__).parent / "assets"
 APP_NAME = "UDbhavishya"
 TAGLINE = "See what demand comes next · by Udbhav Dalal"
 
 st.set_page_config(page_title=APP_NAME, page_icon=str(ASSETS / "mark_64.png"), layout="wide",
                    initial_sidebar_state="expanded")
+_theme = "dark" if getattr(st.context.theme, "type", None) == "dark" else "light"
+_veil, _card, _track, _ink = (
+    ("rgba(0,0,0,0.55)", "#1f2229", "rgba(255,255,255,0.14)", "#f0efec") if _theme == "dark"
+    else ("rgba(15,23,42,0.28)", "#ffffff", "rgba(42,120,214,0.16)", "#0b0b0b"))
+
+# Styles go in before the heavier imports, so the loading overlay already works on the first load.
+# The overlay shows while Streamlit is running the script (its status widget is present). It
+# blocks clicks at once and fades in after 0.35 s, so quick slider updates don't flash.
+st.html(f"""<style>
+[data-testid="stSidebarHeader"] {{ margin-bottom: 0; height: auto; padding-top: 0.25rem; }}
+[data-testid="stSidebarHeader"] img {{ height: 3rem; max-width: 100%; }}
+[data-testid="stSidebarUserContent"] {{ padding-top: 0; }}
+[data-testid="stSidebarUserContent"] [data-testid="stCaptionContainer"]:first-of-type {{ margin-top: 0.6rem; }}
+
+.st-key-topbar {{ position: fixed; top: 0.6rem; right: 3.75rem; z-index: 999991; width: auto; }}
+.st-key-topbar button {{ padding: 0.15rem 0.75rem; min-height: 2rem; }}
+
+@keyframes ud-fade {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
+@keyframes ud-spin {{ to {{ transform: translate(-50%, -50%) rotate(360deg); }} }}
+.stApp:has([data-testid="stStatusWidget"])::before {{
+  content: "Working on it…"; position: fixed; inset: 0; z-index: 1000000;
+  display: flex; align-items: center; justify-content: center; padding-top: 6.4rem;
+  background: radial-gradient(circle at 50% calc(50% + 1.1rem), {_card} 0 6.2rem, transparent 6.25rem), {_veil};
+  backdrop-filter: blur(2px); color: {_ink};
+  font: 600 1rem system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.01em;
+  animation: ud-fade 0.25s ease 0.35s both; cursor: progress;
+}}
+.stApp:has([data-testid="stStatusWidget"])::after {{
+  content: ""; position: fixed; left: 50%; top: 50%; z-index: 1000001;
+  width: 3.25rem; height: 3.25rem; border-radius: 50%;
+  border: 0.32rem solid {_track}; border-top-color: #2a78d6; border-right-color: #2a78d6;
+  transform: translate(-50%, -50%);
+  animation: ud-fade 0.25s ease 0.35s both, ud-spin 0.8s linear infinite;
+}}
+</style>""")
+
+from engine import frequency as fq  # noqa: E402
+from engine import seasonality, split  # noqa: E402
+from engine import validate as v  # noqa: E402
+from engine.messages import has_errors  # noqa: E402,F401
+from ui import messages, state, steps  # noqa: E402
+from ui.widgets import bind_state  # noqa: E402
+
 state.init()
 ss = st.session_state
-_theme = "dark" if getattr(st.context.theme, "type", None) == "dark" else "light"
 st.logo(str(ASSETS / f"wordmark_{_theme}.svg"), size="large", icon_image=str(ASSETS / "mark.svg"))
-# Larger logo, and the tagline sits right under it.
-st.html("""<style>
-[data-testid="stSidebarHeader"] { margin-bottom: 0; height: auto; padding-top: 0.25rem; }
-[data-testid="stSidebarHeader"] img { height: 3rem; max-width: 100%; }
-[data-testid="stSidebarUserContent"] { padding-top: 0; }
-[data-testid="stSidebarUserContent"] [data-testid="stCaptionContainer"]:first-of-type { margin-top: -0.4rem; }
-</style>""")
+
+
+# ---------------------------------------------------------------- reset
+
+def _ask_reset() -> None:
+    ss.confirm_reset = True
+
+
+def _cancel_reset() -> None:
+    ss.confirm_reset = False
+
+
+def _do_reset() -> None:
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+
+@st.dialog("Start over?", dismissible=False)
+def confirm_reset() -> None:
+    st.markdown("This clears your uploaded file, every choice you made and all results, "
+                "and takes you back to the first screen.")
+    st.warning("Your progress will be lost. This cannot be undone.", icon="⚠")
+    left, right = st.columns(2)
+    left.button("Cancel", width="stretch", on_click=_cancel_reset, key="reset_cancel")
+    right.button("Reset everything", type="primary", width="stretch", on_click=_do_reset, key="reset_confirm")
+
+
+with st.container(key="topbar"):
+    st.button("Reset", icon=":material/restart_alt:", key="reset_all", on_click=_ask_reset,
+              help="Start over: clear the data, choices and results.")
+if ss.get("confirm_reset"):
+    confirm_reset()
 
 
 # ---------------------------------------------------------------- data + run

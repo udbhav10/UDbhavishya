@@ -10,6 +10,7 @@ APP = "../app.py"
 
 def new_app(**session):
     at = AppTest.from_file(APP, default_timeout=60)
+    session = {"source": "demo", **session}
     for k, val in session.items():
         at.session_state[k] = val
     return at
@@ -142,3 +143,32 @@ def test_results_updated_note_after_split_change():
     at.slider(key="w_test_length").set_value(6).run()
     go(at, "Models")
     assert any("Results updated: test period changed" in c.value for c in at.caption)
+
+
+def test_upload_is_the_default_start():
+    at = AppTest.from_file(APP, default_timeout=60)
+    at.run()
+    assert not at.exception
+    assert at.session_state["source"] == "upload"
+    assert any("Upload a sales file to begin" in i.value for i in at.info)
+    next_button = next(b for b in at.button if b.label.startswith("Next"))
+    assert next_button.disabled
+
+
+def test_reset_clears_everything_after_confirmation():
+    at = new_app(demo_key="ac")
+    at.run()
+    go(at, "Compare")
+    at.button(key="reset_all").click().run()
+    assert not at.exception
+    # the confirmation dialog is open; nothing has been cleared yet
+    assert at.session_state["step"] == "Compare"
+    assert any("Your progress will be lost" in w.value for w in at.warning)
+    at.button(key="reset_cancel").click().run()  # cancel keeps everything
+    assert at.session_state["step"] == "Compare" and not at.session_state["confirm_reset"]
+    at.button(key="reset_all").click().run()
+    at.button(key="reset_confirm").click().run()
+    assert not at.exception
+    assert at.session_state["step"] == "Data"
+    assert at.session_state["source"] == "upload"
+    assert at.session_state["demo_key"] == "paint"

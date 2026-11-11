@@ -63,7 +63,7 @@ def data_step(ctx: state.DataContext) -> None:
     with left:
         if "src_source" not in ss:
             ss.src_source = ss.source
-        st.segmented_control("Data source", ["demo", "upload"], key="src_source", on_change=_on_source_change,
+        st.segmented_control("Data source", ["upload", "demo"], key="src_source", on_change=_on_source_change,
                              format_func={"demo": "Demo product", "upload": "Upload a file"}.get,
                              help="Use a realistic sample product, or upload your own sales file.")
         if ss.source == "demo":
@@ -93,6 +93,8 @@ def data_step(ctx: state.DataContext) -> None:
             _frequency_controls(ctx)
 
     if ctx.frame is None and not ctx.messages:
+        st.info("Upload a sales file to begin, or choose **Demo product** to explore with sample data.",
+                icon="📂")
         return
     messages.render_all(ctx.messages, "data", skip=("duplicates", "gaps", "single_sku", "frequency"))
     if ctx.diagnosis is not None:

@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
+from . import frequency as fq
 from . import outliers as outl
 from . import pipeline, ranges, recommend, seasonality, split, tracking
 from .models import ORDER, Availability, FitResult, availability
@@ -195,7 +196,7 @@ def _parts(chosen: str, comparison: recommend.Comparison) -> list[str]:
 def forecast_csv(result: RunResult) -> bytes:
     t = result.final.table
     frame = pd.DataFrame({
-        "period": [str(p) for p in t.index],
+        "period": fq.labels(t.index),
         "forecast": t["forecast"].round(3).to_numpy(),
         "lower": t["lower"].round(3).to_numpy(),
         "upper": t["upper"].round(3).to_numpy(),

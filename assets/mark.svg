@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>Udbhavishya</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3987e5"/>
+      <stop offset="1" stop-color="#1c5cab"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
+  <!-- forecast range: a cone opening into the future -->
+  <path d="M39 30 L57 9 L57 25 Z" fill="#ffffff" fill-opacity="0.22"/>
+  <!-- the U: history -->
+  <path d="M15 13 V33 a12 12 0 0 0 24 0 V30" fill="none" stroke="#ffffff" stroke-width="6.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- the forecast: dashed line rising out of the U -->
+  <path d="M39 30 L53 15" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"
+        stroke-dasharray="0.1 7"/>
+  <circle cx="54.5" cy="13.5" r="4" fill="#ffffff"/>
+</svg>

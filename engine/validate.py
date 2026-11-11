@@ -283,7 +283,7 @@ def diagnose(raw: SkuRaw, freq: fq.Frequency | None = None) -> Diagnosis:
     full = pd.period_range(filled["period"].min(), filled["period"].max(), freq=periods.freq)
     gaps = [p for p in full if p not in present]
     if gaps:
-        table = pd.DataFrame({"missing period": [str(p) for p in gaps]})
+        table = pd.DataFrame({"missing period": fq.labels(gaps)})
         messages.append(Message("warning", "gaps",
                                 f"{len(gaps)} {freq.unit}(s) have no demand value. Choose how to fill them.",
                                 table, list(GAP_CHOICES.values())))
@@ -346,7 +346,7 @@ def build_series(raw: SkuRaw, diagnosis: Diagnosis, freq: fq.Frequency,
             raise ValueError("A gap filling choice is required.")
         demand = demand.fillna(0.0) if gap_choice == "zero" else demand.ffill()
         notes.append(ChangeNote("gaps", f"{len(diagnosis.gaps)} gaps: {GAP_CHOICES[gap_choice].lower()}",
-                                pd.DataFrame({"period": [str(p) for p in diagnosis.gaps]})))
+                                pd.DataFrame({"period": fq.labels(diagnosis.gaps)})))
     driver = driver.ffill().bfill() if has_driver else None
 
     future = None
@@ -381,7 +381,7 @@ def _rollup_all(demand, driver, future, to_code, driver_how):
     for p in new_demand.index:
         partial = p.start_time < src_start or p.end_time > src_end
         if partial:
-            dropped.append(str(p))
+            dropped.append(fq.label(p))
         else:
             keep.append(p)
     new_demand = new_demand.loc[keep]

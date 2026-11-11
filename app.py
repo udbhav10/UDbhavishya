@@ -1,5 +1,10 @@
-"""Forecast Studio: a guided demand-forecasting app (Streamlit entry point)."""
+"""Udbhavishya: a guided demand-forecasting app (Streamlit entry point).
+
+Udbhav (origin) + bhavishya (the future), by Udbhav Dalal.
+"""
 from __future__ import annotations
+
+from pathlib import Path
 
 import streamlit as st
 
@@ -10,10 +15,16 @@ from engine.messages import has_errors
 from ui import messages, state, steps
 from ui.widgets import bind_state
 
-st.set_page_config(page_title="Forecast Studio", page_icon="📈", layout="wide",
+ASSETS = Path(__file__).parent / "assets"
+APP_NAME = "Udbhavishya"
+TAGLINE = "See what demand comes next · by Udbhav Dalal"
+
+st.set_page_config(page_title=APP_NAME, page_icon=str(ASSETS / "mark_64.png"), layout="wide",
                    initial_sidebar_state="expanded")
 state.init()
 ss = st.session_state
+_theme = "dark" if getattr(st.context.theme, "type", None) == "dark" else "light"
+st.logo(str(ASSETS / f"wordmark_{_theme}.svg"), size="large", icon_image=str(ASSETS / "mark.svg"))
 
 
 # ---------------------------------------------------------------- data + run
@@ -46,8 +57,8 @@ def sku_status(name: str) -> str:
 
 
 with st.sidebar:
-    st.markdown("### 📈 Forecast Studio")
-    st.caption(ctx.source_label)
+    st.caption(TAGLINE)
+    st.markdown(f"**{ctx.source_label}**")
     if ctx.parsed is not None and ctx.parsed.has_sku_column and ctx.parsed.skus:
         names = list(ctx.parsed.skus)
 
@@ -66,8 +77,8 @@ with st.sidebar:
         if result is not None:
             st.markdown(f"**Seasonal period** · {result.s if result.s else 'none'}")
             sp = result.split
-            st.markdown(f"**Training** · {sp.train.index[0]} – {sp.train.index[-1]}  \n"
-                        f"**Test** · {sp.test.index[0]} – {sp.test.index[-1]}")
+            st.markdown(f"**Training** · {fq.label(sp.train.index[0])} – {fq.label(sp.train.index[-1])}  \n"
+                        f"**Test** · {fq.label(sp.test.index[0])} – {fq.label(sp.test.index[-1])}")
     st.divider()
     st.caption("ℹ Your data stays in this session only. Nothing is saved or shared.")
     st.caption("Theme: ⋮ menu → Settings → light or dark.")

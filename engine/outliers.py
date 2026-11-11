@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from . import frequency as fq
+
 REPLACEMENTS = {
     "none": "Leave unchanged",
     "reference": "Replace with the reference forecast",
@@ -85,7 +87,7 @@ def detect(train: pd.Series, season: int | None, z_limit: float = 3.0,
     corrected = _correct(y, ref, lower, upper, flags, replacement)
     changed = flags & (corrected != y)
     corrections = pd.DataFrame({
-        "period": [str(p) for p in y.index[changed]],
+        "period": fq.labels(y.index[changed]),
         "original": y[changed].to_numpy(),
         "new": corrected[changed].to_numpy(),
         "z": score[changed].round(2).to_numpy(),

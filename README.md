@@ -1,4 +1,7 @@
-# Forecast Studio
+# Udbhavishya
+
+*Udbhav* (origin) + *bhavishya* (the future): see what demand comes next.
+By Udbhav Dalal.
 
 A guided demand-forecasting web app. Load a sales history (or a demo product), test
 forecasting methods honestly on a hidden test period, and get a recommended forecast

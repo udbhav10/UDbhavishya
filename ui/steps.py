@@ -103,7 +103,7 @@ def data_step(ctx: state.DataContext) -> None:
     messages.change_bar(ctx.series.notes, "data_notes")
     st.markdown(f"**{ctx.series.sku if ctx.parsed.has_sku_column else 'Demand'}** · "
                 f"{len(ctx.series.demand)} {ctx.series.freq.unit}s · "
-                f"{ctx.series.demand.index[0]} to {ctx.series.demand.index[-1]}")
+                f"{fq.label(ctx.series.demand.index[0])} to {fq.label(ctx.series.demand.index[-1])}")
     show(charts.series_chart(ctx.series.demand, ctx.unit), "data_series")
 
 
@@ -176,7 +176,7 @@ def _duplicates_panel(ctx: state.DataContext) -> None:
         return
     messages.render(msg, "dups", show_rows=False)
     rows = d.duplicates.copy()
-    rows["period"] = rows["period"].astype(str)
+    rows["period"] = fq.labels(rows["period"])
     rows["date"] = rows["date"].dt.strftime("%Y-%m-%d")
 
     def highlight(row):
@@ -259,8 +259,8 @@ def split_step(ctx, result) -> None:
                    min_value=1, max_value=max(1, n - 4),
                    help="The latest periods held back to test forecasts honestly.")
         sp = result.split
-        st.caption(f"Training {sp.train.index[0]} – {sp.train.index[-1]} ({len(sp.train)}) · "
-                   f"Test {sp.test.index[0]} – {sp.test.index[-1]} ({len(sp.test)})")
+        st.caption(f"Training {fq.label(sp.train.index[0])} – {fq.label(sp.train.index[-1])} ({len(sp.train)}) · "
+                   f"Test {fq.label(sp.test.index[0])} – {fq.label(sp.test.index[-1])} ({len(sp.test)})")
     with c2:
         bind_state(st.slider, "Outlier limit (± standard deviations)", "outlier_z", min_value=1.5,
                    max_value=5.0, step=0.5, help="Points further than this from normal are flagged as outliers.")
@@ -547,7 +547,7 @@ def forecast_step(ctx, result) -> None:
     show(charts.tracking_chart(tr), "tracking_chart")
 
     table = final.table.copy()
-    table.index = table.index.astype(str)
+    table.index = fq.labels(table.index)
     with st.expander("Forecast table"):
         st.dataframe(table.round(2), width="stretch",
                      column_config={c: st.column_config.NumberColumn(format="%.1f") for c in table.columns})
@@ -563,7 +563,7 @@ def forecast_step(ctx, result) -> None:
 def _driver_editor(final, result) -> None:
     name = result.series.driver_name or "driver"
     st.markdown(f"**Future {name} values** · {final.driver_source}")
-    frame = pd.DataFrame({"period": final.driver_values.index.astype(str), name: final.driver_values.values})
+    frame = pd.DataFrame({"period": fq.labels(final.driver_values.index), name: final.driver_values.values})
     edited = st.data_editor(frame, hide_index=True, disabled=["period"], width="stretch",
                             key=f"w_drv_{len(frame)}_{hash(tuple(frame[name]))}")
     new = edited[name].to_numpy(dtype=float)

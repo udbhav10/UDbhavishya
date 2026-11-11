@@ -89,3 +89,14 @@ def rollup(demand: pd.Series, driver: pd.Series | None, to_code: str,
         grouped = driver.groupby(dtarget)
         new_driver = grouped.sum(min_count=1) if driver_how == "sum" else grouped.mean()
     return new_demand, new_driver
+
+
+def label(period: pd.Period) -> str:
+    """Readable period text: weeks as 'wk 2024-01-01' (start date), others as pandas prints them."""
+    if period.freqstr.startswith("W"):
+        return f"wk {period.start_time:%Y-%m-%d}"
+    return str(period)
+
+
+def labels(index) -> list[str]:
+    return [label(p) for p in index]

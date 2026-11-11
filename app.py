@@ -1,4 +1,4 @@
-"""Udbhavishya: a guided demand-forecasting app (Streamlit entry point).
+"""UDbhavishya: a guided demand-forecasting app (Streamlit entry point).
 
 Udbhav (origin) + bhavishya (the future), by Udbhav Dalal.
 """
@@ -16,7 +16,7 @@ from ui import messages, state, steps
 from ui.widgets import bind_state
 
 ASSETS = Path(__file__).parent / "assets"
-APP_NAME = "Udbhavishya"
+APP_NAME = "UDbhavishya"
 TAGLINE = "See what demand comes next · by Udbhav Dalal"
 
 st.set_page_config(page_title=APP_NAME, page_icon=str(ASSETS / "mark_64.png"), layout="wide",
@@ -25,6 +25,13 @@ state.init()
 ss = st.session_state
 _theme = "dark" if getattr(st.context.theme, "type", None) == "dark" else "light"
 st.logo(str(ASSETS / f"wordmark_{_theme}.svg"), size="large", icon_image=str(ASSETS / "mark.svg"))
+# Larger logo, and the tagline sits right under it.
+st.html("""<style>
+[data-testid="stSidebarHeader"] { margin-bottom: 0; height: auto; padding-top: 0.25rem; }
+[data-testid="stSidebarHeader"] img { height: 3rem; max-width: 100%; }
+[data-testid="stSidebarUserContent"] { padding-top: 0; }
+[data-testid="stSidebarUserContent"] [data-testid="stCaptionContainer"]:first-of-type { margin-top: -0.4rem; }
+</style>""")
 
 
 # ---------------------------------------------------------------- data + run

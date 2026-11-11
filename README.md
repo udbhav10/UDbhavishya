@@ -1,4 +1,4 @@
-# Udbhavishya
+# UDbhavishya
 
 *Udbhav* (origin) + *bhavishya* (the future): see what demand comes next.
 By Udbhav Dalal.

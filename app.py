@@ -28,8 +28,6 @@ st.html(f"""<style>
 [data-testid="stSidebarUserContent"] {{ padding-top: 0; }}
 [data-testid="stSidebarUserContent"] [data-testid="stCaptionContainer"]:first-of-type {{ margin-top: 0.6rem; }}
 
-.st-key-topbar {{ position: fixed; top: 0.875rem; right: 3.75rem; z-index: 999991; width: auto; }}
-.st-key-topbar button {{ padding: 0.15rem 0.75rem; min-height: 2rem; }}
 
 @keyframes ud-fade {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
 @keyframes ud-spin {{ to {{ transform: translate(-50%, -50%) rotate(360deg); }} }}
@@ -92,28 +90,23 @@ def _ask_reset() -> None:
     ss.confirm_reset = True
 
 
-def _cancel_reset() -> None:
-    ss.confirm_reset = False
-
-
-def _do_reset() -> None:
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-
-
 @st.dialog("Start over?", dismissible=False)
 def confirm_reset() -> None:
     st.markdown("This clears your uploaded file, every choice you made and all results, "
                 "and takes you back to the first screen.")
     st.warning("Your progress will be lost. This cannot be undone.", icon="⚠")
     left, right = st.columns(2)
-    left.button("Cancel", width="stretch", on_click=_cancel_reset, key="reset_cancel")
-    right.button("Reset everything", type="primary", width="stretch", on_click=_do_reset, key="reset_confirm")
+    # Buttons inside a dialog rerun only the dialog; st.rerun() reruns the whole app, which
+    # closes the dialog because it is no longer opened.
+    if left.button("Cancel", width="stretch", key="reset_cancel"):
+        ss.confirm_reset = False
+        st.rerun()
+    if right.button("Reset everything", type="primary", width="stretch", key="reset_confirm"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
 
 
-with st.container(key="topbar"):
-    st.button("Reset", icon=":material/restart_alt:", key="reset_all", on_click=_ask_reset,
-              help="Start over: clear the data, choices and results.")
 with st.container(key="themesync"):
     st.button("theme sync", key="theme_sync")  # clicked by the theme watcher; hidden
 if ss.get("confirm_reset"):
@@ -192,8 +185,14 @@ locked_attempt = blocked and (ss.step or state.STEPS[0]) != state.STEPS[0]
 if locked_attempt:
     ss.step = state.STEPS[0]
     ss.pop("w_step", None)
-bind_state(st.segmented_control, "Step", "step", options=state.STEPS, label_visibility="collapsed",
-           format_func=lambda s: labels[s] if not (blocked and s != state.STEPS[0]) else f"🔒 {labels[s]}")
+nav_col, reset_col = st.columns([5, 1], vertical_alignment="center")
+with nav_col:
+    bind_state(st.segmented_control, "Step", "step", options=state.STEPS, label_visibility="collapsed",
+               format_func=lambda s: labels[s] if not (blocked and s != state.STEPS[0]) else f"🔒 {labels[s]}")
+with reset_col:
+    with st.container(horizontal_alignment="right"):
+        st.button("Reset", icon=":material/restart_alt:", key="reset_all", on_click=_ask_reset,
+                  help="Start over: clear the data, choices and results.")
 current = ss.step or state.STEPS[0]
 if locked_attempt:
     st.warning(f"Finish the Data step first: {ctx.block_reason}", icon="⚠")
